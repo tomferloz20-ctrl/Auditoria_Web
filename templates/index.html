@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo Decisorio de Auditoría Médica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #0f2c59; 
+            --medical-teal: #00a3bf;
+            --btn-approve: #2e7d32;
+            --btn-reject: #c62828;
+        }
+
+        body {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: var(--primary-blue);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 4px solid var(--medical-teal);
+        }
+
+        header h1 { margin: 0; font-size: 1.5rem; }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            max-width: 1700px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .card h3 {
+            color: var(--primary-blue);
+            margin-top: 0;
+            border-left: 4px solid var(--medical-teal);
+            padding-left: 10px;
+            font-size: 1.1rem;
+        }
+
+        .table-container { overflow-y: auto; max-height: 650px; }
+
+        .audit-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
+
+        .audit-table th {
+            background: #f8fafc;
+            color: #475569;
+            padding: 10px;
+            border-bottom: 2px solid #cbd5e1;
+            position: sticky;
+            top: 0;
+        }
+
+        .audit-table td { padding: 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; }
+
+        .audit-table tr.selected-row td { background-color: #e0f2fe !important; }
+
+        .badge-codigo { background: #e2e8f0; color: #334155; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+
+        /* Panel de detalles */
+        .detail-panel { position: sticky; top: 20px; height: fit-content; }
+
+        .detail-field { margin-bottom: 12px; font-size: 0.8rem; }
+
+        .detail-field label { display: block; font-weight: 700; color: #64748b; font-size: 0.65rem; margin-bottom: 2px; text-transform: uppercase; }
+
+        .detail-field div { background: #f8fafc; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+
+        .history-box { background: #fffbeb; border: 1px solid #fef3c7; padding: 10px; border-radius: 6px; color: #b45309; }
+
+        /* Contenedor de Botones de Acción Operativa */
+        .action-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 700;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-action:disabled {
+            background: #cbd5e1 !important;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-approve { background: var(--btn-approve); }
+        .btn-approve:hover:not(:disabled) { background: #1b5e20; }
+
+        .btn-reject { background: var(--btn-reject); }
+        .btn-reject:hover:not(:disabled) { background: #b71c1c; }
+
+        .btn-action:active:not(:disabled) { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>⚕️ SISTEMA INTERACTIVO DE AUDITORÍA MÓDULO RIPS (SIAM 2026)</h1>
+</header>
+
+<div class="workspace">
+    <div class="card">
+        <h3>📋 Radicaciones Recientes (Haz clic para auditar)</h3>
+        <div class="table-container">
+            <table class="audit-table" id="tabla-rips">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>ID RIPS</th>
+                        <th>IPS (Origen)</th>
+                        <th>Código CUPS</th>
+                        <th>Valor</th>
+                        <th>Estado de IA</th>
+                        <th>Decisión Humana</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card detail-panel" id="panel-detalles">
+        <h3>🔍 Expediente Operativo de Validación</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: -10px;">Revise los datos y tome una acción definitiva de pago.</p>
+        
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 10px 0;">
+
+        <div class="detail-field"><label>ID Radicado</label><div id="det-id">-- Seleccione --</div></div>
+        <div class="detail-field"><label>Médico Tratante</label><div id="det-medico">-- Seleccione --</div></div>
+        <div class="detail-field"><label>Procedimiento (CUPS)</label><div id="det-cups">-- Seleccione --</div></div>
+        <div class="detail-field"><label>Diagnóstico (CIE-11)</label><div id="det-cie11">-- Seleccione --</div></div>
+        <div class="detail-field"><label>Dictamen IA</label><div id="det-motivo" style="font-weight:600;">-- Seleccione --</div></div>
+        <div class="detail-field"><label>Historial Institucional</label><div id="det-antecedentes" class="history-box">Ningún elemento seleccionado.</div></div>
+
+        <div class="action-container">
+            <button class="btn-action btn-approve" id="btn-autorizar" disabled onclick="tomarDecision('AUTORIZADO ✅', '#2e7d32')">
+                ✔ Autorizar Pago
+            </button>
+            <button class="btn-action btn-reject" id="btn-glosar" disabled onclick="tomarDecision('GLOSADO ❌', '#d32f2f')">
+                ✖ Glosar / Rechazar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let transaccionesMemoria = {};
+    let idSeleccionado = null; // Guarda el ID del RIPS que el usuario tiene abierto
+
+    function procesarRips() {
+        fetch('/datos_ia')
+            .then(res => res.json())
+            .then(data => {
+                const table = document.getElementById('tabla-rips').getElementsByTagName('tbody')[0];
+                let row = table.insertRow(0);
+                
+                transaccionesMemoria[data.rips_id] = data;
+                
+                row.setAttribute('data-id', data.rips_id);
+                row.id = `fila-${data.rips_id}`; // ID único para buscar la fila después
+                row.innerHTML = `
+                    <td>${data.hora}</td>
+                    <td><span class="badge-codigo">${data.rips_id}</span></td>
+                    <td><b>${data.entidad}</b></td>
+                    <td><span class="badge-codigo" style="background:#e0f2fe; color:#0369a1;">${data.cups_cod}</span></td>
+                    <td style="font-weight:700;">${data.valor}</td>
+                    <td><span style="color: ${data.color}; font-weight: bold;">● ${data.estado}</span></td>
+                    <td id="decision-${data.rips_id}" style="color: #64748b; font-style: italic;">Pendiente revisión</td>
+                `;
+
+                row.addEventListener('click', function() {
+                    const rows = table.getElementsByTagName('tr');
+                    for(let r of rows) { r.classList.remove('selected-row'); }
+                    this.classList.add('selected-row');
+
+                    idSeleccionado = this.getAttribute('data-id');
+                    const datosCompletos = transaccionesMemoria[idSeleccionado];
+
+                    // Actualizar campos
+                    document.getElementById('det-id').innerText = datosCompletos.rips_id;
+                    document.getElementById('det-medico').innerText = datosCompletos.medico;
+                    document.getElementById('det-cups').innerText = datosCompletos.cups_desc;
+                    document.getElementById('det-cie11').innerText = datosCompletos.cie11_desc;
+                    document.getElementById('det-motivo').innerText = datosCompletos.motivo;
+                    document.getElementById('det-motivo').style.color = datosCompletos.color;
+                    document.getElementById('det-antecedentes').innerText = datosCompletos.antecedentes;
+
+                    // Habilitar los botones ya que hay un elemento seleccionado
+                    document.getElementById('btn-autorizar').disabled = false;
+                    document.getElementById('btn-glosar').disabled = false;
+                });
+
+                if(table.rows.length > 20) { table.deleteRow(table.rows.length - 1); }
+            });
+    }
+
+    // Función que se activa al hacer clic en los botones
+    function tomarDecision(texto, color) {
+        if (!idSeleccionado) return;
+
+        // 1. Modificar la celda "Decisión Humana" en la tabla de la izquierda
+        const celdaDecision = document.getElementById(`decision-${idSeleccionado}`);
+        if (celdaDecision) {
+            celdaDecision.innerText = texto;
+            celdaDecision.style.color = color;
+            celdaDecision.style.fontWeight = "bold";
+            celdaDecision.style.fontStyle = "normal";
+        }
+
+        // 2. Mostrar una alerta visual de confirmación en el navegador
+        alert(`Registro ${idSeleccionado} procesado como: ${texto}`);
+
+        // Deshabilitar los botones hasta que seleccione otro ítem
+        document.getElementById('btn-autorizar').disabled = true;
+        document.getElementById('btn-glosar').disabled = true;
+    }
+
+    setInterval(procesarRips, 2500);
+</script>
+
+</body>
+</html>
