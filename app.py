@@ -4,6 +4,7 @@ import datetime
 
 app = Flask(__name__)
 
+# Bases de datos simuladas para el sector salud de Cali
 EPS = ["Sura", "Sanitas", "Nueva EPS", "Salud Total", "Coosalud"]
 IPS_CALI = ["Fundación Valle del Lili", "Clínica Imbanaco", "HUV", "ESE Ladera", "Clínica Farallones"]
 
@@ -42,6 +43,7 @@ def datos_ia():
     tipo_rips = random.choice(RIPS_TIPOS)
     medico = random.choice(["Dr. Juan Arana", "Dra. Elena Ortiz", "Dr. Luis Vivas", "Dra. Sara Restrepo"])
     
+    # Lógica de costos según la complejidad del CUPS
     if "Consulta" in procedimiento["descripcion"] or "Hemograma" in procedimiento["descripcion"]:
         valor = random.randint(45000, 180000)
     elif "Ecografía" in procedimiento["descripcion"] or "Fisioterapia" in procedimiento["descripcion"]:
@@ -49,9 +51,11 @@ def datos_ia():
     else: 
         valor = random.randint(15000000, 55000000)
 
+    # Simulación de anomalía/error de digitación (25% de probabilidad)
     if random.random() < 0.25: 
         valor = valor * 150  
         
+    # Auditoría administrativa automatizada y detección de alertas
     if "Consulta" in procedimiento["descripcion"] and valor > 500000:
         estado = "FRAUDE DETECTADO"
         color = "#d32f2f"
@@ -91,7 +95,6 @@ def datos_ia():
         "fecha": datetime.datetime.now().strftime('%d/%m/%Y')
     })
 
+# El cierre estándar compatible con Gunicorn y servidores en la nube
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run()
